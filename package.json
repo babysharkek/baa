@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter @openreel/web dev",
-    "build:wasm": "pnpm --filter @openreel/core build:wasm",
+    "build:wasm": "pnpm --filter @openreel/core build:wasm || echo 'WASM build skipped - will use fallbacks'",
     "build": "pnpm build:wasm && pnpm --filter @openreel/web build && node -e \"require('fs').copyFileSync('_redirects', 'dist/_redirects')\"",
     "preview": "pnpm --filter @openreel/web preview",
     "deploy": "pnpm build && wrangler pages deploy dist --project-name openreel",
