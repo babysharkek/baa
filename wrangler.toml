@@ -6,26 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
 
 [env.production]
-name = "openreel"
-routes = [
-  { pattern = "openreel.pages.dev", custom_domain = false }
-]
+vars = { NODE_ENV = "production" }
 
-[env.staging]
-name = "openreel-staging"
-routes = [
-  { pattern = "openreel-staging.pages.dev", custom_domain = false }
-]
-
-# Build configuration
-[build]
-command = "pnpm build"
-cwd = ""
-
-# Environment variables
-[vars]
-NODE_ENV = "production"
-
-# Production secrets (to be set in Cloudflare dashboard)
-# [secrets]
-# API_KEY = "your-api-key-here"
+[env.preview]
+vars = { NODE_ENV = "development" }
