@@ -20,7 +20,7 @@ export default defineConfig({
   },
   build: {
     target: "esnext",
-    outDir: "dist",
+    outDir: "../../dist",
     emptyOutDir: true,
     rollupOptions: {
       output: {

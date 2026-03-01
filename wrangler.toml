@@ -2,6 +2,9 @@ name = "openreel"
 compatibility_date = "2024-03-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Pages configuration
+pages_build_output_dir = "dist"
+
 [env.production]
 name = "openreel"
 routes = [
@@ -17,13 +20,7 @@ routes = [
 # Build configuration
 [build]
 command = "pnpm build"
-watch_dir = "src"
 cwd = ""
-
-[build.upload]
-format = "modules"
-dir = "dist"
-main = "./apps/web/dist/index.html"
 
 # Environment variables
 [vars]
