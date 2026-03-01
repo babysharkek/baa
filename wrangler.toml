@@ -4,9 +4,3 @@ compatibility_flags = ["nodejs_compat"]
 
 # Pages configuration
 pages_build_output_dir = "dist"
-
-[env.production]
-vars = { NODE_ENV = "production" }
-
-[env.preview]
-vars = { NODE_ENV = "development" }
