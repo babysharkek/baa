@@ -68,6 +68,38 @@ function getCpuTier(cores: number): DeviceTier {
   return "low";
 }
 
+function detectCpuInfo(): CpuInfo {
+  const cores = navigator.hardwareConcurrency || 4;
+  let tier = getCpuTier(cores);
+  
+  // Check for specific low-end AMD processors in user agent
+  const ua = navigator.userAgent.toLowerCase();
+  
+  // AMD Athlon Silver 7120U and similar low-power processors
+  if (ua.includes('amd athlon') || ua.includes('athlon silver') || ua.includes('7120u')) {
+    tier = "low";
+  }
+  
+  // Other low-end AMD processors
+  if (ua.includes('amd a4') || ua.includes('amd a6') || ua.includes('amd e1') || ua.includes('amd e2')) {
+    tier = "low";
+  }
+  
+  // Intel Celeron and Pentium (low-end)
+  if (ua.includes('intel celeron') || ua.includes('intel pentium')) {
+    tier = "low";
+  }
+  
+  // Intel Core i3 (entry-level)
+  if (ua.includes('intel core i3') && cores <= 4) {
+    tier = "low";
+  } else if (ua.includes('intel core i3') && cores > 4) {
+    tier = "mid";
+  }
+  
+  return { cores, tier };
+}
+
 function getMemoryTier(gb: number): DeviceTier {
   if (gb >= 8) return "high";
   if (gb >= 4) return "mid";
@@ -96,10 +128,35 @@ function getGpuTier(renderer: string): DeviceTier {
     "apple m1",
     "intel iris",
     "intel uhd",
+    "radeon vega",
+    "radeon r7",
+    "radeon r9",
   ];
+
+  const lowEndPatterns = [
+    "radeon r5",
+    "radeon r3",
+    "radeon hd",
+    "intel hd graphics",
+    "intel hd 4000",
+    "intel hd 5000",
+    "intel hd 6000",
+    "amd radeon",
+    "ati mobility",
+  ];
+
+  // Check for AMD Athlon specifically
+  if (r.includes("amd athlon") || r.includes("athlon")) {
+    // Athlon with integrated graphics is typically low-end
+    if (r.includes("radeon") && (r.includes("r5") || r.includes("r3") || r.includes("hd"))) {
+      return "low";
+    }
+    return "low";
+  }
 
   if (highEndPatterns.some((p) => r.includes(p))) return "high";
   if (midEndPatterns.some((p) => r.includes(p))) return "mid";
+  if (lowEndPatterns.some((p) => r.includes(p))) return "low";
   return "low";
 }
 
@@ -241,10 +298,9 @@ function calculateOverallTier(
 }
 
 export async function detectDeviceCapabilities(): Promise<DeviceProfile> {
-  const cores = navigator.hardwareConcurrency || 4;
   const memory = (navigator as unknown as { deviceMemory?: number }).deviceMemory || 4;
 
-  const cpu: CpuInfo = { cores, tier: getCpuTier(cores) };
+  const cpu = detectCpuInfo();
   const memoryInfo: MemoryInfo = { gb: memory, tier: getMemoryTier(memory) };
   const gpuBase = detectGpu();
   const encoding = await detectEncodingSupport();

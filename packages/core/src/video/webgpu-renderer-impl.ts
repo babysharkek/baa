@@ -13,6 +13,8 @@ import {
   createTransformMatrix,
 } from "./shaders";
 import { TextureCache, calculateTextureSize } from "./texture-cache";
+import { getDeviceProfile } from "../device/device-capabilities.js";
+import { optimizeForDevice, type PerformanceProfile } from "../device/performance-profiles.js";
 
 export class WebGPURenderer implements Renderer {
   readonly type = "webgpu" as const;
@@ -29,6 +31,7 @@ export class WebGPURenderer implements Renderer {
   private isDeviceLost = false;
   private deviceRecreationInProgress = false;
   private _config: RendererConfig;
+  private performanceProfile: PerformanceProfile | null = null;
 
   // Double buffering
   private frameBuffers: GPUTexture[] = [];
@@ -81,6 +84,21 @@ export class WebGPURenderer implements Renderer {
     void this.bindGroupLayoutRef;
   }
 
+  private async initializePerformanceProfile(): Promise<void> {
+    try {
+      const deviceProfile = await getDeviceProfile();
+      this.performanceProfile = optimizeForDevice(deviceProfile);
+      
+      // Apply performance profile settings
+      this._maxTextureCache = this.performanceProfile.settings.maxTextureCache;
+      
+      console.log(`[WebGPURenderer] Using performance profile: ${this.performanceProfile.name}`);
+      console.log(`[WebGPURenderer] Max texture cache: ${this._maxTextureCache / 1024 / 1024}MB`);
+    } catch (error) {
+      console.warn('[WebGPURenderer] Failed to initialize performance profile:', error);
+    }
+  }
+
   /** Get the max texture cache size */
   get maxTextureCache(): number {
     return this._maxTextureCache;
@@ -93,14 +111,21 @@ export class WebGPURenderer implements Renderer {
 
   async initialize(): Promise<boolean> {
     try {
+      // Initialize performance profile first
+      await this.initializePerformanceProfile();
+      
       if (!navigator.gpu) {
         console.warn("[WebGPURenderer] WebGPU not supported");
         return false;
       }
 
-      // Request adapter with high-performance preference
+      // Request adapter with performance preference based on profile
+      const powerPreference = this.performanceProfile?.settings.enableHardwareAcceleration 
+        ? "high-performance" 
+        : "low-power";
+      
       this.adapter = await navigator.gpu.requestAdapter({
-        powerPreference: "high-performance",
+        powerPreference,
       });
 
       if (!this.adapter) {
@@ -154,6 +179,15 @@ export class WebGPURenderer implements Renderer {
           );
         },
       });
+
+      // Log performance profile settings
+      if (this.performanceProfile) {
+        console.log(`[WebGPURenderer] Performance settings:`, {
+          frameCacheSize: this.performanceProfile.settings.frameCacheSize,
+          maxConcurrentEffects: this.performanceProfile.settings.maxConcurrentEffects,
+          effectQuality: this.performanceProfile.settings.effectQuality,
+        });
+      }
 
       return true;
     } catch (error) {
@@ -214,7 +248,11 @@ export class WebGPURenderer implements Renderer {
       buffer.destroy();
     }
     this.frameBuffers = [];
-    for (let i = 0; i < 2; i++) {
+    
+    // Use double buffering only if enabled in performance profile
+    const bufferCount = this.performanceProfile?.settings.enableDoubleBuffering ? 2 : 1;
+    
+    for (let i = 0; i < bufferCount; i++) {
       const texture = this.device.createTexture({
         size: { width: this.width, height: this.height },
         format: "rgba8unorm",

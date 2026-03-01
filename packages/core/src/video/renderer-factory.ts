@@ -1,6 +1,6 @@
 import type { Effect, Transform } from "../types/timeline";
 
-export type RendererType = "webgpu" | "canvas2d";
+export type RendererType = "webgpu" | "canvas2d" | "adaptive";
 
 export interface RendererConfig {
   canvas: HTMLCanvasElement | OffscreenCanvas;
