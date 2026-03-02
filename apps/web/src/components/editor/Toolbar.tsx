@@ -4,28 +4,17 @@ import {
   Command,
   ChevronDown,
   FileVideo,
-  Film,
   Music,
-  Sun,
-  Moon,
-  SunMoon,
   Loader2,
   X,
   Check,
-  FileCode,
   Settings,
   Zap,
-  Circle,
-  History,
-  HelpCircle,
-  Diamond,
-  Sparkles,
-  Play,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
-import { useThemeStore } from "../../stores/theme-store";
-import { useRouter } from "../../hooks/use-router";
 import {
   getExportEngine,
   getDeviceProfile,
@@ -37,12 +26,9 @@ import {
   type TimeEstimate,
 } from "@openreel/core";
 import { ExportDialog } from "./ExportDialog";
-import { ScreenRecorder } from "./ScreenRecorder";
-import { HistoryPanel } from "./inspector/HistoryPanel";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { toast } from "../../stores/notification-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
-import { startTour, ONBOARDING_KEY, startMoGraphTour, MOGRAPH_TOUR_KEY } from "./tour";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -76,34 +62,15 @@ interface ExportState {
 }
 
 export const Toolbar: React.FC = () => {
-  const { project } = useProjectStore();
+  const { project, importMedia, undo, redo, canUndo, canRedo } = useProjectStore();
   const {
     openModal,
     selectedItems,
     setExportState: setGlobalExportState,
-    keyframeEditorOpen,
-    toggleKeyframeEditor,
-    panels,
-    togglePanel,
   } = useUIStore();
-  const { mode: themeMode, toggleTheme } = useThemeStore();
-  const { navigate } = useRouter();
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [isRecorderOpen, setIsRecorderOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const { importMedia } = useProjectStore();
   const { track } = useAnalytics();
-
-  const handleStartTour = useCallback(() => {
-    localStorage.removeItem(ONBOARDING_KEY);
-    startTour();
-  }, []);
-
-  const handleStartMoGraphTour = useCallback(() => {
-    localStorage.removeItem(MOGRAPH_TOUR_KEY);
-    startMoGraphTour();
-  }, []);
 
   const hasSelectedClip = selectedItems.some(
     (item) =>
@@ -170,6 +137,20 @@ export const Toolbar: React.FC = () => {
   const handleSearch = useCallback(() => {
     openModal("search");
   }, [openModal]);
+
+  const handleUndo = useCallback(async () => {
+    try {
+      await undo();
+    } catch {
+    }
+  }, [undo]);
+
+  const handleRedo = useCallback(async () => {
+    try {
+      await redo();
+    } catch {
+    }
+  }, [redo]);
 
   const runExport = useCallback(
     async (videoSettings: Partial<VideoExportSettings>, _ext: string, writableStream: FileSystemWritableFileStream) => {
@@ -403,62 +384,6 @@ export const Toolbar: React.FC = () => {
   );
 
 
-  const handleRecordingComplete = useCallback(
-    async (screenBlob: Blob, webcamBlob?: Blob) => {
-      if (!screenBlob || screenBlob.size === 0) {
-        toast.error(
-          "Recording failed",
-          "No video data was captured. Please try again.",
-        );
-        return;
-      }
-
-      const timestamp = new Date()
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:-]/g, "");
-      let importCount = 0;
-      const errors: string[] = [];
-
-      const screenFile = new File([screenBlob], `Screen_${timestamp}.webm`, {
-        type: screenBlob.type || "video/webm",
-      });
-      const screenResult = await importMedia(screenFile);
-      if (screenResult.success) {
-        importCount++;
-      } else {
-        errors.push(
-          screenResult.error?.message || "Failed to import screen recording",
-        );
-      }
-
-      if (webcamBlob && webcamBlob.size > 0) {
-        const webcamFile = new File([webcamBlob], `Webcam_${timestamp}.webm`, {
-          type: webcamBlob.type || "video/webm",
-        });
-        const webcamResult = await importMedia(webcamFile);
-        if (webcamResult.success) {
-          importCount++;
-        } else {
-          errors.push(
-            webcamResult.error?.message || "Failed to import webcam recording",
-          );
-        }
-      }
-
-      if (importCount > 0) {
-        toast.success(
-          `${importCount} recording${importCount > 1 ? "s" : ""} imported!`,
-          webcamBlob && webcamBlob.size > 0
-            ? "Screen and webcam added to assets. Use the timeline to composite them."
-            : "Screen recording added to assets.",
-        );
-      } else if (errors.length > 0) {
-        toast.error("Import failed", errors.join(". "));
-      }
-    },
-    [importMedia],
-  );
 
   const projectRes = `${project.settings.width}×${project.settings.height}`;
   const aspectRatio = project.settings.width / project.settings.height;
@@ -481,7 +406,7 @@ export const Toolbar: React.FC = () => {
     },
     {
       label: "",
-      icon: Film,
+      icon: X,
       desc: "",
       type: "mp4",
       separator: true,
@@ -519,91 +444,6 @@ export const Toolbar: React.FC = () => {
   return (
     <div className="h-16 border-b border-border flex items-center px-6 justify-between bg-background shrink-0 z-30 relative">
       <div className="flex items-center gap-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => navigate("welcome")}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              title="Back to Home"
-            >
-              <div className="w-8 h-8 group">
-                <svg
-                  viewBox="0 0 490 490"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-full h-full text-primary group-hover:scale-110 transition-transform duration-300"
-                >
-                  <path
-                    d="M245 24.5C123.223 24.5 24.5 123.223 24.5 245s98.723 220.5 220.5 220.5 220.5-98.723 220.5-220.5S366.777 24.5 245 24.5Z"
-                    stroke="currentColor"
-                    strokeWidth="30.625"
-                    className="opacity-100"
-                  />
-                  <g className="origin-center group-hover:rotate-90 transition-transform duration-500 ease-out">
-                    <path
-                      d="M245 98v73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M392 245h-73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M245 392v-73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M98 245h73.5"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m348.941 141.059-51.965 51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m348.941 348.941-51.965-51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m141.059 348.941 51.965-51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="m141.059 141.059 51.965 51.965"
-                      stroke="currentColor"
-                      strokeWidth="24.5"
-                      strokeLinecap="round"
-                    />
-                  </g>
-                  <path
-                    d="M294 245a49 49 0 0 1-49 49 49 49 0 0 1-49-49 49 49 0 0 1 98 0"
-                    fill="currentColor"
-                    className="group-hover:fill-white transition-colors duration-300"
-                  />
-                </svg>
-              </div>
-              <span className="text-lg font-medium text-text-primary tracking-wide hidden lg:block">
-                Open Reel
-              </span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Back to Home</TooltipContent>
-        </Tooltip>
-        <div className="h-6 w-px bg-border hidden md:block" />
         <ProjectSwitcher />
       </div>
 
@@ -650,131 +490,33 @@ export const Toolbar: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors"
-            >
-              <HelpCircle size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={handleStartTour} className="gap-2">
-              <Play size={14} />
-              <span>Editor Tour</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleStartMoGraphTour} className="gap-2">
-              <Sparkles size={14} className="text-purple-400" />
-              <span>Animation & Effects Tour</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-text-muted">
-              <Command size={14} />
-              <span>Press ? for shortcuts</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors"
+              onClick={handleUndo}
+              disabled={!canUndo()}
+              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-text-secondary"
             >
-              {themeMode === "light" ? (
-                <Sun size={16} />
-              ) : themeMode === "dark" ? (
-                <Moon size={16} />
-              ) : (
-                <SunMoon size={16} />
-              )}
+              <RotateCcw size={16} />
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Theme: {themeMode}</p>
+            <p>Undo</p>
           </TooltipContent>
         </Tooltip>
 
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={() => useUIStore.getState().openModal("scriptView")}
-              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors"
+              onClick={handleRedo}
+              disabled={!canRedo()}
+              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-text-secondary"
             >
-              <FileCode size={16} />
+              <RotateCw size={16} />
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Project JSON - Export/Import</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={toggleKeyframeEditor}
-              className={`p-2 rounded-lg transition-colors ${
-                keyframeEditorOpen
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <Diamond size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Keyframe Editor</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => togglePanel("audioMixer")}
-              className={`p-2 rounded-lg transition-colors ${
-                panels.audioMixer?.visible
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <Music size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Audio Mixer – track volume and master level</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-              className={`p-2 rounded-lg transition-colors ${
-                isHistoryOpen
-                  ? "bg-primary/20 text-primary"
-                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <History size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>History - Undo/Redo</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={() => setIsRecorderOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-error/10 hover:bg-error/20 text-error rounded-lg transition-colors"
-            >
-              <Circle size={14} className="fill-current" />
-              <span className="text-sm font-medium">Record</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Screen Recording</p>
+            <p>Redo</p>
           </TooltipContent>
         </Tooltip>
 
@@ -926,35 +668,6 @@ export const Toolbar: React.FC = () => {
         projectWidth={project.settings?.width ?? 1920}
         projectHeight={project.settings?.height ?? 1080}
       />
-
-      <ScreenRecorder
-        isOpen={isRecorderOpen}
-        onClose={() => setIsRecorderOpen(false)}
-        onRecordingComplete={handleRecordingComplete}
-      />
-
-      {isHistoryOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/20 z-40"
-            onClick={() => setIsHistoryOpen(false)}
-          />
-          <div className="fixed top-16 right-0 bottom-0 w-80 bg-background-secondary border-l border-border z-50 shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="flex items-center justify-between p-3 border-b border-border">
-              <span className="text-sm font-medium text-text-primary">Action History</span>
-              <button
-                onClick={() => setIsHistoryOpen(false)}
-                className="p-1.5 rounded hover:bg-background-tertiary text-text-muted hover:text-text-primary transition-colors"
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div className="h-[calc(100%-49px)]">
-              <HistoryPanel />
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 };
