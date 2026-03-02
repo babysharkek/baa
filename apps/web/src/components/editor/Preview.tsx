@@ -219,9 +219,6 @@ export const Preview: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [showZoomMenu, setShowZoomMenu] = useState(false);
 
-  const videoAreaRef = useRef<HTMLDivElement>(null);
-  const [videoAreaSize, setVideoAreaSize] = useState({ width: 0, height: 0 });
-
   const ZOOM_OPTIONS = [
     { label: "100%", value: 1 },
     { label: "125%", value: 1.25 },
@@ -307,22 +304,6 @@ export const Preview: React.FC = () => {
 
     resizeObserver.observe(canvas);
     return () => resizeObserver.disconnect();
-  }, []);
-
-  // Track available size of the preview area to keep the preview fully visible
-  useEffect(() => {
-    const el = videoAreaRef.current;
-    if (!el) return;
-
-    const ro = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        setVideoAreaSize({ width, height });
-      }
-    });
-
-    ro.observe(el);
-    return () => ro.disconnect();
   }, []);
 
   // Project store - subscribe to the entire project to ensure re-renders
@@ -4643,41 +4624,6 @@ export const Preview: React.FC = () => {
 
   const shouldShowCropMode = cropMode && cropClipId && cropClip && cropVideoSrc;
 
-  const previewDisplaySize = useMemo(() => {
-    const aspect = settings.width / settings.height;
-    const isFull = isMaximized || isFullscreen;
-
-    const availableWidth = Math.max(0, videoAreaSize.width - (isFull ? 0 : 32));
-    const availableHeight = Math.max(
-      0,
-      videoAreaSize.height - (isFull ? 48 : 32),
-    );
-
-    if (availableWidth === 0 || availableHeight === 0) {
-      const baseHeight = 450;
-      return {
-        width: baseHeight * aspect,
-        height: baseHeight,
-      };
-    }
-
-    const fitWidth = Math.min(availableWidth, availableHeight * aspect);
-    const fitHeight = fitWidth / aspect;
-
-    return {
-      width: fitWidth * zoomLevel,
-      height: fitHeight * zoomLevel,
-    };
-  }, [
-    settings.width,
-    settings.height,
-    videoAreaSize.width,
-    videoAreaSize.height,
-    zoomLevel,
-    isMaximized,
-    isFullscreen,
-  ]);
-
   return (
     <div
       ref={containerRef}
@@ -4701,16 +4647,15 @@ export const Preview: React.FC = () => {
 
       {/* Video Area */}
       <div
-        ref={videoAreaRef}
         className={`flex-1 relative flex items-center justify-center bg-background-secondary/30 transition-all duration-300 ${
-          isMaximized || isFullscreen ? "p-0 pb-12" : "p-4"
+          isMaximized || isFullscreen ? "p-0" : "p-4"
         } ${zoomLevel > 1 ? "overflow-auto" : ""}`}
         onMouseMove={interactionMode !== "none" ? handleMouseMove : undefined}
         onMouseUp={handleMouseUp}
       >
         <div
           ref={overlayRef}
-          className={`relative bg-black overflow-visible transition-all duration-300 ${
+          className={`relative bg-black overflow-hidden transition-all duration-300 ${
             isMaximized || isFullscreen
               ? "rounded-none ring-0 shadow-none"
               : "shadow-2xl rounded-xl ring-1 ring-border shadow-[0_0_50px_rgba(0,0,0,0.5)]"
@@ -4723,9 +4668,9 @@ export const Preview: React.FC = () => {
                   maxWidth: "none",
                 }
               : {
-                  height: `${previewDisplaySize.height}px`,
-                  width: `${previewDisplaySize.width}px`,
-                  maxWidth: "none",
+                  height: `${450 * zoomLevel}px`,
+                  width: `calc(${450 * zoomLevel}px * ${settings.width} / ${settings.height})`,
+                  maxWidth: `${800 * zoomLevel}px`,
                 }
           }
         >
