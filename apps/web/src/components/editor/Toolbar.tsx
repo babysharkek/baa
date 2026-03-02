@@ -27,7 +27,6 @@ import {
 } from "@openreel/core";
 import { ExportDialog } from "./ExportDialog";
 import { ProjectSwitcher } from "./ProjectSwitcher";
-import { toast } from "../../stores/notification-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
 import {
   DropdownMenu,
@@ -62,7 +61,7 @@ interface ExportState {
 }
 
 export const Toolbar: React.FC = () => {
-  const { project, importMedia, undo, redo, canUndo, canRedo } = useProjectStore();
+  const { project, undo, redo, canUndo, canRedo } = useProjectStore();
   const {
     openModal,
     selectedItems,
