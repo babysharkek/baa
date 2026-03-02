@@ -27,9 +27,9 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          hover: "#16a34a",
-          active: "#15803d",
-          glow: "rgba(34, 197, 94, 0.5)",
+          hover: "rgb(var(--brand-primary-dark) / <alpha-value>)",
+          active: "rgb(var(--brand-primary-dark) / <alpha-value>)",
+          glow: "rgba(251, 146, 60, 0.5)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -60,10 +60,10 @@ export default {
           muted: "rgb(var(--color-text-muted) / <alpha-value>)",
         },
         status: {
-          success: "#22c55e",
-          warning: "#eab308",
-          error: "#ef4444",
-          info: "#3b82f6",
+          success: "rgb(var(--brand-primary) / <alpha-value>)",
+          warning: "251 191 36",
+          error: "239 68 68",
+          info: "rgb(var(--brand-accent) / <alpha-value>)",
         }
       },
       fontFamily: {
@@ -71,9 +71,11 @@ export default {
         mono: ['Geist Mono', 'monospace'],
       },
       boxShadow: {
-        'glow': '0 0 10px rgba(34, 197, 94, 0.3)',
-        'glow-lg': '0 0 20px rgba(34, 197, 94, 0.4)',
+        'glow': '0 0 10px rgba(251, 146, 60, 0.3)',
+        'glow-lg': '0 0 20px rgba(251, 146, 60, 0.4)',
         'panel': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)',
+        'warm': '0 4px 14px 0 rgba(251, 146, 60, 0.15)',
+        'warm-lg': '0 10px 25px -5px rgba(251, 146, 60, 0.25)',
       },
       borderRadius: {
         lg: "var(--radius)",
