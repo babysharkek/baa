@@ -10,8 +10,7 @@ import {
   Check,
   Settings,
   Zap,
-  RotateCcw,
-  RotateCw,
+  History,
 } from "lucide-react";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
@@ -26,6 +25,7 @@ import {
   type TimeEstimate,
 } from "@openreel/core";
 import { ExportDialog } from "./ExportDialog";
+import { HistoryPanel } from "./inspector/HistoryPanel";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
 import {
@@ -61,7 +61,7 @@ interface ExportState {
 }
 
 export const Toolbar: React.FC = () => {
-  const { project, undo, redo, canUndo, canRedo } = useProjectStore();
+  const { project } = useProjectStore();
   const {
     openModal,
     selectedItems,
@@ -69,6 +69,7 @@ export const Toolbar: React.FC = () => {
   } = useUIStore();
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { track } = useAnalytics();
 
   const hasSelectedClip = selectedItems.some(
@@ -137,19 +138,6 @@ export const Toolbar: React.FC = () => {
     openModal("search");
   }, [openModal]);
 
-  const handleUndo = useCallback(async () => {
-    try {
-      await undo();
-    } catch {
-    }
-  }, [undo]);
-
-  const handleRedo = useCallback(async () => {
-    try {
-      await redo();
-    } catch {
-    }
-  }, [redo]);
 
   const runExport = useCallback(
     async (videoSettings: Partial<VideoExportSettings>, _ext: string, writableStream: FileSystemWritableFileStream) => {
@@ -492,30 +480,18 @@ export const Toolbar: React.FC = () => {
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={handleUndo}
-              disabled={!canUndo()}
-              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-text-secondary"
+              onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+              className={`p-2 rounded-lg transition-colors ${
+                isHistoryOpen
+                  ? "bg-primary/20 text-primary"
+                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
+              }`}
             >
-              <RotateCcw size={16} />
+              <History size={16} />
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Undo</p>
-          </TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={handleRedo}
-              disabled={!canRedo()}
-              className="p-2 rounded-lg hover:bg-background-elevated text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-text-secondary"
-            >
-              <RotateCw size={16} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Redo</p>
+            <p>History - Action snapshots</p>
           </TooltipContent>
         </Tooltip>
 
@@ -667,6 +643,29 @@ export const Toolbar: React.FC = () => {
         projectWidth={project.settings?.width ?? 1920}
         projectHeight={project.settings?.height ?? 1080}
       />
+
+      {isHistoryOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={() => setIsHistoryOpen(false)}
+          />
+          <div className="fixed top-16 right-0 bottom-0 w-80 bg-background-secondary border-l border-border z-50 shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-3 border-b border-border">
+              <span className="text-sm font-medium text-text-primary">Action History</span>
+              <button
+                onClick={() => setIsHistoryOpen(false)}
+                className="p-1.5 rounded hover:bg-background-tertiary text-text-muted hover:text-text-primary transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="h-[calc(100%-49px)]">
+              <HistoryPanel />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
