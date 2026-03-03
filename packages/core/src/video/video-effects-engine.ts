@@ -1048,6 +1048,30 @@ export class VideoEffectsEngine {
         );
         break;
       }
+      case "colorWheels": {
+        const shadows = params.shadows as { r: number; g: number; b: number };
+        const midtones = params.midtones as { r: number; g: number; b: number };
+        const highlights = params.highlights as { r: number; g: number; b: number };
+        const shadowsLift = (params.shadowsLift as number) || 0;
+        const midtonesGamma = (params.midtonesGamma as number) || 1;
+        const highlightsGain = (params.highlightsGain as number) || 1;
+        this.applyColorWheels(data, shadows, midtones, highlights, shadowsLift, midtonesGamma, highlightsGain);
+        break;
+      }
+      case "curves": {
+        const rgb = params.rgb as Array<{ x: number; y: number }>;
+        const red = params.red as Array<{ x: number; y: number }>;
+        const green = params.green as Array<{ x: number; y: number }>;
+        const blue = params.blue as Array<{ x: number; y: number }>;
+        this.applyCurves(data, rgb, red, green, blue);
+        break;
+      }
+      case "lut": {
+        const lutData = params.lutData as Uint8Array;
+        const intensity = (params.intensity as number) || 1;
+        this.applyLUT(data, lutData, intensity);
+        break;
+      }
       // Color grading filters
       case "temperature": {
         const temperature = (params.value as number) || 0;
@@ -1404,6 +1428,106 @@ export class VideoEffectsEngine {
 
   getRenderer(): Renderer | null {
     return this.renderer;
+  }
+
+  // Color grading implementation methods
+  private applyColorWheels(
+    data: Uint8ClampedArray,
+    shadows: { r: number; g: number; b: number },
+    midtones: { r: number; g: number; b: number },
+    highlights: { r: number; g: number; b: number },
+    shadowsLift: number,
+    midtonesGamma: number,
+    highlightsGain: number
+  ): void {
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i] / 255;
+      let g = data[i + 1] / 255;
+      let b = data[i + 2] / 255;
+      
+      // Apply color wheel adjustments
+      r = Math.pow(r, 1 / midtonesGamma) * highlightsGain;
+      g = Math.pow(g, 1 / midtonesGamma) * highlightsGain;
+      b = Math.pow(b, 1 / midtonesGamma) * highlightsGain;
+      
+      // Add shadows/midtones/highlights color adjustments
+      r += shadows.r * 0.1 + midtones.r * 0.1 + highlights.r * 0.1;
+      g += shadows.g * 0.1 + midtones.g * 0.1 + highlights.g * 0.1;
+      b += shadows.b * 0.1 + midtones.b * 0.1 + highlights.b * 0.1;
+      
+      data[i] = Math.max(0, Math.min(255, r * 255));
+      data[i + 1] = Math.max(0, Math.min(255, g * 255));
+      data[i + 2] = Math.max(0, Math.min(255, b * 255));
+    }
+  }
+
+  private applyCurves(
+    data: Uint8ClampedArray,
+    rgb: Array<{ x: number; y: number }>,
+    red: Array<{ x: number; y: number }>,
+    green: Array<{ x: number; y: number }>,
+    blue: Array<{ x: number; y: number }>
+  ): void {
+    // Simple curve implementation using linear interpolation
+    const interpolateCurve = (value: number, curve: Array<{ x: number; y: number }>): number => {
+      if (curve.length < 2) return value;
+      
+      for (let i = 0; i < curve.length - 1; i++) {
+        if (value >= curve[i].x && value <= curve[i + 1].x) {
+          const t = (value - curve[i].x) / (curve[i + 1].x - curve[i].x);
+          return curve[i].y + t * (curve[i + 1].y - curve[i].y);
+        }
+      }
+      return value;
+    };
+    
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = Math.max(0, Math.min(255, interpolateCurve(data[i] / 255, red) * 255));
+      data[i + 1] = Math.max(0, Math.min(255, interpolateCurve(data[i + 1] / 255, green) * 255));
+      data[i + 2] = Math.max(0, Math.min(255, interpolateCurve(data[i + 2] / 255, blue) * 255));
+    }
+  }
+
+  private applyLUT(data: Uint8ClampedArray, lutData: Uint8Array, intensity: number): void {
+    // Assuming 33x33x33 LUT (standard size)
+    const lutSize = 33;
+    const lutIndex = (r: number, g: number, b: number) => {
+      const ri = Math.floor((r / 255) * (lutSize - 1));
+      const gi = Math.floor((g / 255) * (lutSize - 1));
+      const bi = Math.floor((b / 255) * (lutSize - 1));
+      return (ri * lutSize * lutSize + gi * lutSize + bi) * 3;
+    };
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const idx = lutIndex(data[i], data[i + 1], data[i + 2]);
+      const newR = lutData[idx];
+      const newG = lutData[idx + 1];
+      const newB = lutData[idx + 2];
+      
+      // Blend with original based on intensity
+      data[i] = Math.max(0, Math.min(255, data[i] * (1 - intensity) + newR * intensity));
+      data[i + 1] = Math.max(0, Math.min(255, data[i + 1] * (1 - intensity) + newG * intensity));
+      data[i + 2] = Math.max(0, Math.min(255, data[i + 2] * (1 - intensity) + newB * intensity));
+    }
+  }
+
+  private applyTemperature(data: Uint8ClampedArray, temperature: number): void {
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      
+      data[i] = Math.max(0, Math.min(255, r + temperature * 50));
+      data[i + 2] = Math.max(0, Math.min(255, b - temperature * 50));
+    }
+  }
+
+  private applyTint(data: Uint8ClampedArray, tint: number): void {
+    for (let i = 0; i < data.length; i += 4) {
+      const g = data[i + 1];
+      
+      data[i + 1] = Math.max(0, Math.min(255, g + tint * 30));
+    }
   }
 }
 let videoEffectsEngineInstance: VideoEffectsEngine | null = null;

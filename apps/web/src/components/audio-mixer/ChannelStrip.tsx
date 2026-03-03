@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import type { ChannelStripState } from "./types";
 import { volumeToDb, formatDb, formatPan } from "./types";
+import { Music, Film, Volume2 } from "lucide-react";
 
 export interface ChannelStripProps {
   channel: ChannelStripState;
@@ -210,7 +211,7 @@ export const ChannelStrip: React.FC<ChannelStripProps> = ({
   }, [channel.muted, channel.solo, hasSoloedTracks]);
 
   // Track type icon
-  const trackTypeIcon = channel.trackType === "audio" ? "🎵" : "🎬";
+  const trackTypeIcon = channel.trackType === "audio" ? Music : Film;
 
   return (
     <div
@@ -223,7 +224,7 @@ export const ChannelStrip: React.FC<ChannelStripProps> = ({
         className="text-xs text-gray-300 font-medium truncate w-full text-center"
         title={channel.trackName}
       >
-        <span className="mr-1">{trackTypeIcon}</span>
+        <trackTypeIcon size={12} className="inline mr-1" />
         {channel.trackName}
       </div>
 
