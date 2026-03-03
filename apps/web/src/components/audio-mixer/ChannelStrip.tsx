@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import type { ChannelStripState } from "./types";
 import { volumeToDb, formatDb, formatPan } from "./types";
-import { Music, Film, Volume2 } from "lucide-react";
+import { Music, Film } from "lucide-react";
 
 export interface ChannelStripProps {
   channel: ChannelStripState;

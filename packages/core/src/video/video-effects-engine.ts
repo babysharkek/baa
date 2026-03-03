@@ -1212,21 +1212,21 @@ export class VideoEffectsEngine {
 
     for (let i = 0; i < data.length; i += 4) {
       let r = data[i];
-      let g = data[i + 1];
+      let _g = data[i + 1];
       let b = data[i + 2];
 
       if (normalizedTemp > 0) {
         r = Math.min(255, r + normalizedTemp * 51);
-        g = Math.min(255, g + normalizedTemp * 25.5);
+        _g = Math.min(255, _g + normalizedTemp * 25.5);
         b = Math.max(0, b - normalizedTemp * 51);
       } else {
         r = Math.max(0, r + normalizedTemp * 51);
-        g = Math.max(0, g + normalizedTemp * 12.75);
+        _g = Math.max(0, _g + normalizedTemp * 12.75);
         b = Math.min(255, b - normalizedTemp * 51);
       }
 
       data[i] = Math.round(r);
-      data[i + 1] = Math.round(g);
+      data[i + 1] = Math.round(_g);
       data[i + 2] = Math.round(b);
     }
   }
@@ -1436,7 +1436,7 @@ export class VideoEffectsEngine {
     shadows: { r: number; g: number; b: number },
     midtones: { r: number; g: number; b: number },
     highlights: { r: number; g: number; b: number },
-    shadowsLift: number,
+    _shadowsLift: number,
     midtonesGamma: number,
     highlightsGain: number
   ): void {
@@ -1463,7 +1463,7 @@ export class VideoEffectsEngine {
 
   private applyCurves(
     data: Uint8ClampedArray,
-    rgb: Array<{ x: number; y: number }>,
+    _rgb: Array<{ x: number; y: number }>,
     red: Array<{ x: number; y: number }>,
     green: Array<{ x: number; y: number }>,
     blue: Array<{ x: number; y: number }>
@@ -1508,25 +1508,6 @@ export class VideoEffectsEngine {
       data[i] = Math.max(0, Math.min(255, data[i] * (1 - intensity) + newR * intensity));
       data[i + 1] = Math.max(0, Math.min(255, data[i + 1] * (1 - intensity) + newG * intensity));
       data[i + 2] = Math.max(0, Math.min(255, data[i + 2] * (1 - intensity) + newB * intensity));
-    }
-  }
-
-  private applyTemperature(data: Uint8ClampedArray, temperature: number): void {
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      
-      data[i] = Math.max(0, Math.min(255, r + temperature * 50));
-      data[i + 2] = Math.max(0, Math.min(255, b - temperature * 50));
-    }
-  }
-
-  private applyTint(data: Uint8ClampedArray, tint: number): void {
-    for (let i = 0; i < data.length; i += 4) {
-      const g = data[i + 1];
-      
-      data[i + 1] = Math.max(0, Math.min(255, g + tint * 30));
     }
   }
 }

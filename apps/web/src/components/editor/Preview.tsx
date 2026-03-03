@@ -214,7 +214,7 @@ export const Preview: React.FC = () => {
   const [isRenderBridgeReady, setIsRenderBridgeReady] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [rendererType, setRendererType] = useState<string>("none");
-  const [viewportSize, setViewportSize] = useState({ width: 1920, height: 1080 });
+  const [viewportSize] = useState({ width: 1920, height: 1080 });
   const [isMaximized, setIsMaximized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);

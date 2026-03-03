@@ -23,9 +23,7 @@ import {
   Grid2x2,
   List,
   Music as Music2,
-  FileText,
   Smile,
-  PartyHeart,
   Heart,
   Flame,
   ThumbsUp,
@@ -1000,7 +998,7 @@ export const AssetsPanel: React.FC = () => {
               Stickers & Emojis
             </h4>
             <div className="grid grid-cols-4 gap-2">
-              {[{ icon: Smile, label: "Smile" }, { icon: PartyHeart, label: "Party" }, { icon: Heart, label: "Heart" }, { icon: Star, label: "Star" }, { icon: Flame, label: "Fire" }, { icon: ThumbsUp, label: "Like" }, { icon: Film, label: "Film" }, { icon: Music2, label: "Music" }].map(
+              {[{ icon: Smile, label: "Smile" }, { icon: Heart, label: "Heart" }, { icon: Star, label: "Star" }, { icon: Flame, label: "Fire" }, { icon: ThumbsUp, label: "Like" }, { icon: Film, label: "Film" }, { icon: Music2, label: "Music" }].map(
                 (emoji, i) => (
                   <button
                     key={i}
@@ -1020,14 +1018,8 @@ export const AssetsPanel: React.FC = () => {
                       );
 
                       if (newGraphicsTrack) {
-                        const stickerItem = {
-                          id: `sticker-${i}`,
-                          name: emoji.label,
-                          category: "emojis",
-                          icon: emoji.icon,
-                        };
-                        const clip = stickerLibrary.createIconClip(
-                          emojiItem,
+                        const clip = stickerLibrary.createEmojiClip(
+                          emoji.label,
                           newGraphicsTrack.id,
                           0,
                           5,
@@ -1037,7 +1029,7 @@ export const AssetsPanel: React.FC = () => {
                     }}
                     className="aspect-square bg-background-tertiary rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-center text-xl cursor-pointer"
                   >
-                    <emoji.icon size={20} className="text-text-secondary" />
+                    {emoji.label}
                   </button>
                 ),
               )}
