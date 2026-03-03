@@ -33,7 +33,7 @@ import {
   generateBackgroundBlob,
   type BackgroundPreset,
 } from "../../services/background-generator";
-import type { ShapeType } from "@openreel/core";
+import type { ShapeType, EmojiItem } from "@openreel/core";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
 import type { MediaItem } from "@openreel/core";
@@ -1018,8 +1018,14 @@ export const AssetsPanel: React.FC = () => {
                       );
 
                       if (newGraphicsTrack) {
+                        const emojiItem: EmojiItem = {
+                          id: `emoji-${i}`,
+                          emoji: emoji.label,
+                          name: emoji.label,
+                          category: "emojis",
+                        };
                         const clip = stickerLibrary.createEmojiClip(
-                          emoji.label,
+                          emojiItem,
                           newGraphicsTrack.id,
                           0,
                           5,
