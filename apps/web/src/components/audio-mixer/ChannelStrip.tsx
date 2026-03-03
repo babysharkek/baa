@@ -210,8 +210,8 @@ export const ChannelStrip: React.FC<ChannelStripProps> = ({
     return false;
   }, [channel.muted, channel.solo, hasSoloedTracks]);
 
-  // Track type icon
-  const trackTypeIcon = channel.trackType === "audio" ? Music : Film;
+  // Track type icon - inlined to avoid TypeScript warning
+  const TrackTypeIcon = channel.trackType === "audio" ? Music : Film;
 
   return (
     <div
@@ -224,7 +224,7 @@ export const ChannelStrip: React.FC<ChannelStripProps> = ({
         className="text-xs text-gray-300 font-medium truncate w-full text-center"
         title={channel.trackName}
       >
-        <trackTypeIcon size={12} className="inline mr-1" />
+        <TrackTypeIcon size={12} className="inline mr-1" />
         {channel.trackName}
       </div>
 
