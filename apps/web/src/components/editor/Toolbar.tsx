@@ -538,7 +538,7 @@ export const Toolbar: React.FC = () => {
             <DropdownMenu open={isExportOpen} onOpenChange={setIsExportOpen}>
               <DropdownMenuTrigger asChild>
                 <button
-                  className={`h-10 px-4 bg-primary hover:bg-primary-hover active:bg-primary-active text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-warm hover:shadow-warm-lg transform hover:-translate-y-0.5 ${
+                  className={`h-10 px-4 bg-primary hover:bg-primary-hover active:bg-primary-active text-white font-bold rounded-lg flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] transform hover:-translate-y-0.5 ${
                     isExportOpen ? "translate-y-0 shadow-none" : ""
                   }`}
                 >
