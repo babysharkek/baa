@@ -26,6 +26,7 @@ import {
 } from "@openreel/core";
 import { ExportDialog } from "./ExportDialog";
 import { HistoryPanel } from "./inspector/HistoryPanel";
+import { KeyboardShortcutsSettings } from "./KeyboardShortcutsSettings";
 import { ProjectSwitcher } from "./ProjectSwitcher";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
 import {
@@ -70,6 +71,7 @@ export const Toolbar: React.FC = () => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { track } = useAnalytics();
 
   const hasSelectedClip = selectedItems.some(
@@ -429,8 +431,8 @@ export const Toolbar: React.FC = () => {
   ];
 
   return (
-    <div className="h-16 border-b border-border flex items-center px-6 justify-between bg-background shrink-0 z-30 relative">
-      <div className="flex items-center gap-4">
+    <div className="h-16 border-b border-border bg-background-secondary px-4 flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
         <ProjectSwitcher />
       </div>
 
@@ -492,6 +494,25 @@ export const Toolbar: React.FC = () => {
           </TooltipTrigger>
           <TooltipContent>
             <p>History - Action snapshots</p>
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className={`p-2 rounded-lg transition-colors ${
+                isSettingsOpen
+                  ? "bg-primary/20 text-primary"
+                  : "hover:bg-background-elevated text-text-secondary hover:text-text-primary"
+              }`}
+              title="Settings"
+            >
+              <Settings size={16} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Settings</p>
           </TooltipContent>
         </Tooltip>
 
@@ -662,6 +683,29 @@ export const Toolbar: React.FC = () => {
             </div>
             <div className="h-[calc(100%-49px)]">
               <HistoryPanel />
+            </div>
+          </div>
+        </>
+      )}
+
+      {isSettingsOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/20 z-40"
+            onClick={() => setIsSettingsOpen(false)}
+          />
+          <div className="fixed top-16 right-0 bottom-0 w-[520px] max-w-[95vw] bg-background-secondary border-l border-border z-50 shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between p-3 border-b border-border">
+              <span className="text-sm font-medium text-text-primary">Settings</span>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-1.5 rounded hover:bg-background-tertiary text-text-muted hover:text-text-primary transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <div className="h-[calc(100%-49px)] p-3">
+              <KeyboardShortcutsSettings />
             </div>
           </div>
         </>
